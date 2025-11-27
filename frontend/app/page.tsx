@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Header from "../components/Header";
+import Filter from "../components/Filter";
+import Table from "../components/Table";
 
 type Campaign = {
   id: number;
@@ -17,6 +20,9 @@ export default function HomePage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filterStatus, setFilterStatus] = useState<"All" | "Active" | "Paused">(
+    "All"
+  );
 
   useEffect(() => {
     async function fetchCampaigns() {
@@ -25,14 +31,11 @@ export default function HomePage() {
         setError(null);
 
         const res = await fetch(`${API_BASE_URL}/campaigns`);
-        if (!res.ok) {
-          throw new Error("Failed to fetch campaigns");
-        }
+        if (!res.ok) throw new Error("Failed to fetch campaigns");
 
-        const data: Campaign[] = await res.json();
-        setCampaigns(data);
+        setCampaigns(await res.json());
       } catch (err: any) {
-        setError(err.message || "Something went wrong");
+        setError(err.message);
       } finally {
         setLoading(false);
       }
@@ -41,29 +44,18 @@ export default function HomePage() {
     fetchCampaigns();
   }, []);
 
+  const filteredCampaigns =
+    filterStatus === "All"
+      ? campaigns
+      : campaigns.filter((c) => c.status === filterStatus);
+
   return (
-    <main className="min-h-screen p-8 bg-gray-100">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-4">
-        Campaign Analytics Dashboard
-      </h1>
-
-      {loading && <p className="text-gray-800 text-sm">Loading campaigns…</p>}
-
-      {error && (
-        <p className="text-red-600 text-sm">
-          Error: {error}. Is the backend running?
-        </p>
-      )}
-
-      {!loading && !error && (
-        <ul className="mt-4 space-y-1 text-sm text-gray-900">
-          {campaigns.map((c) => (
-            <li key={c.id}>
-              {c.name} — {c.status} — {c.clicks} clicks
-            </li>
-          ))}
-        </ul>
-      )}
+    <main className="min-h-screen flex justify-center p-8 bg-gray-200">
+      <div className="w-full max-w-5xl">
+        <Header />
+        <Filter status={filterStatus} setStatus={setFilterStatus} />
+        <Table campaigns={filteredCampaigns} loading={loading} error={error} />
+      </div>
     </main>
   );
 }
