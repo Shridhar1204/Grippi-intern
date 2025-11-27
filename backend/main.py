@@ -41,7 +41,7 @@ def get_db():
         db.close()
 
 
-@app.get("/campaigns", response_model=List[CampaignResponse])
+@app.get("/campaigns", response_model=List[CampaignsResponse])
 def list_campaigns(
     status: Optional[str] = None,
     db: Session = Depends(get_db),
